@@ -9,7 +9,7 @@
 #define PINB1 5 // Pino de controle PWM para motor B (esuqerda)
 #define PINB2 4 // Pino de controle que será configurado como LOW (GND) para motor B (esquerda)
 #define NUMPWM 1
-#define PWM 105 // Velocidade PWM desejada
+#define PWM 65 // Velocidade PWM desejada
 
 MX1508 motorA(PINA1, PINA2, FAST_DECAY, NUMPWM);
 MX1508 motorB(PINB1, PINB2, FAST_DECAY, NUMPWM);
@@ -23,7 +23,7 @@ MX1508 motorB(PINB1, PINB2, FAST_DECAY, NUMPWM);
 #define IR_PIN_RIGHT_2 A1
 #define IR_PIN_LEFT_1 A2
 #define IR_PIN_LEFT_2 A3
-#define threshold 150
+#define threshold 100
 
 bool onLine_r1 = false;
 bool onLine_r2 = false;
@@ -56,16 +56,25 @@ void setup(){
 void loop (){
   // Set Motor Speed - Walk on line
   irReadValues();
-  const int motorA_PWM = (((!onLine_r1)*PWM)+((onLine_r2)*-PWM));
-  const int motorB_PWM = (((!onLine_l1)*PWM)+((onLine_l2)*-PWM));
+  const int motorA_PWM = (((!onLine_r1 && !onLine_r2)*PWM)+((onLine_r2)*3*-PWM));
+  const int motorB_PWM = (((!onLine_l1 && !onLine_l2)*PWM)+((onLine_l2)*3*-PWM));
   motorA.motorGo(motorA_PWM);
   motorB.motorGo(motorB_PWM);
+  if(onLine_r2 || onLine_l2){
+    delay(50);
+  }
+  // motorB.motorGo(0);
 
   // Consumo
-  float sensorValue = analogRead(ANMETER);  // Lê o valor do sensor (0-1023)
-  float voltage = ((sensorValue / 1023.0)*5);  // Converte para tensão (0-5V)
-  Serial.println(voltage - 2.5);
-  float current = (voltage - 1.56) / 0.185;  // Calcula a corrente (A)
+  // float sensorValue = analogRead(ANMETER);  // Lê o valor do sensor (0-1023)
+  // float voltage = ((sensorValue / 1023.0)*5);  // Converte para tensão (0-5V)
+  // Serial.println(voltage - 2.5);
+  // float current = (voltage - 1.56) / 0.185;  // Calcula a corrente (A)
+
+  // Serial.print("motorA_PWM: ");
+  // Serial.print(motorA_PWM);
+  // Serial.print("  -  motorB_PWM: ");
+  // Serial.print(motorB_PWM);
 }
 
 
@@ -74,4 +83,13 @@ void irReadValues() {
   onLine_r2 = (analogRead(IR_PIN_RIGHT_2) > threshold);
   onLine_l1 = (analogRead(IR_PIN_LEFT_1) > threshold);
   onLine_l2 = (analogRead(IR_PIN_LEFT_2) > threshold);
+
+  // Serial.print("  -  IR_PIN_RIGHT_1: ");
+  // Serial.print(analogRead(IR_PIN_RIGHT_1));
+  // Serial.print("  -  IR_PIN_RIGHT_2: ");
+  // Serial.print(analogRead(IR_PIN_RIGHT_2));
+  // Serial.print("  -  IR_PIN_LEFT_1: ");
+  // Serial.print(analogRead(IR_PIN_LEFT_1));
+  // Serial.print("  -  IR_PIN_LEFT_2: ");
+  // Serial.println(analogRead(IR_PIN_LEFT_2));
 }
